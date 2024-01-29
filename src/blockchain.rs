@@ -1,5 +1,6 @@
 use crate::errors::Result;
 use crate::blocks::Block;
+use log::info;
 use sled::Db;
 
 const TARGET_HEX: usize = 4;
@@ -14,32 +15,17 @@ pub struct BlockchainIter<'a> {
 }
 
 impl Blockchain {
-    pub fn new() -> Result<Blockchain> {
+    pub fn load_block_chain() -> Result<Blockchain> {
+        info!("open blockchain");
+
         let db = sled::open("data/blocks")?;
-        match db.get("LAST")? {
-            Some(hash) => {
-                let lasthash = String::from_utf8(hash.to_vec())?;
-                Ok(Blockchain {
-                    current_hash: lasthash,
-                    db,
-                })
-            }
-            None => {
-                let block = Block::new_genesis_block();
-                db.insert(block.get_hash(), bincode::serialize(&block)?)?;
-                db.insert("LAST", block.get_hash().as_bytes())?;
-                let bc = Blockchain {
-                    current_hash: block.get_hash(),
-                    db,
-                };
-                bc.db.flush()?;
-                Ok(bc)
-
-            }
-            
-        }
-
-       
+        let hash = db.get("LAST")?.expect("must create a new blockchain database first");
+        info!("found database");
+        let lasthash = String::from_utf8(hash.to_vec())?;
+        Ok(Blockchain {
+            current_hash: lasthash,
+            db,
+        })
     }
     
     pub fn add_block(&mut self, data: String) -> Result<()> {
