@@ -27,6 +27,9 @@ impl Block {
     pub fn get_hash(&self) ->String {
         self.hash.clone()
     }
+    pub fn get_transactions(&self) -> &Vec<Transaction> {
+        &self.transactions
+    }
     pub fn get_prev_hsh (&self) ->String {
         self.prev_block_hash.clone()
     }

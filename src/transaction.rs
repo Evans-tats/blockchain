@@ -1,6 +1,8 @@
+use clap::error;
 use crypto::{digest::Digest, sha2::Sha256};
+use failure::format_err;
 use serde::{Serialize, Deserialize};
-use crate::errors::Result;
+use crate::{blockchain::Blockchain, errors::Result};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Transaction {
@@ -8,7 +10,7 @@ pub struct Transaction {
     pub vin: Vec<TXInput>,
     pub vout: Vec<TXOutput>,
 }
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)] 
 pub struct TXInput {
     pub txid: String,
     pub vout: i32,
@@ -23,6 +25,46 @@ pub struct TXOutput {
 
 
 impl Transaction {
+
+    pub fn new_UTXO(from: &str, to: &str, amount: i32, bc:&Blockchain) -> Result<Transaction> {
+        let mut vin = Vec::new();
+        let acc_v = bc.find_spendable_outputs(from, amount);
+        if acc_v.0 < amount {
+            error!("Not enough balance");
+            return Err(format_err!("Not Enough Balance: current balance {:?}", acc_v));
+        }
+        for tx in acc_v.1 {
+            for out in tx.1 {
+                let input = TXInput {
+                    txid: tx.0.clone(),
+                    vout: out,
+                    script_sig: String::from(from),
+                };
+                vin.push(input);
+            }
+        }
+        let mut vout = vec![TXOutput {
+            value: amount,
+            script_pub_key: String::from(to),
+        }];
+        if acc_v.0 > amount {
+            vout.push(TXOutput {
+                value: acc_v - amount,
+                script_pub_key: String::from(from),
+            })
+        }
+        let mut tx = Transaction {
+            id: String::new(),
+            vin,
+            vout,
+        };
+
+        tx.set_id()?;
+        Ok(tx)
+
+
+    }
+
     pub fn new_coinbase(to: String, mut data: String) ->Result<Transaction> {
         if data.is_empty() {
             data += &format!("Reward to '{}'", to);
