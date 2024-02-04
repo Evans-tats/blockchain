@@ -30,7 +30,7 @@ impl Transaction {
         let mut vin = Vec::new();
         let acc_v = bc.find_spendable_outputs(from, amount);
         if acc_v.0 < amount {
-            error!("Not enough balance");
+            /*error!("Not enough balance"); */
             return Err(format_err!("Not Enough Balance: current balance {:?}", acc_v));
         }
         for tx in acc_v.1 {
@@ -49,7 +49,7 @@ impl Transaction {
         }];
         if acc_v.0 > amount {
             vout.push(TXOutput {
-                value: acc_v - amount,
+                value: acc_v.0 - amount,
                 script_pub_key: String::from(from),
             })
         }

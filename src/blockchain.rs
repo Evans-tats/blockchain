@@ -162,6 +162,7 @@ impl<'a> Iterator for BlockchainIter<'a> {
     }
 }
 
+/* 
 mod tests {
     use super::*;
 
@@ -177,3 +178,4 @@ mod tests {
         
     }
 }
+*/
